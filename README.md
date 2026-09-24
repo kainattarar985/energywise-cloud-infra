@@ -12,15 +12,15 @@ Data sources -> S3 -> SageMaker -> API Gateway + Lambda -> Dashboard (S3 + Cloud
 
 - Terraform >= 1.5 installed (`terraform --version`)
 - AWS CLI configured with credentials (`aws configure`)
-- A trained model artifact (`model.tar.gz`) already uploaded to the data
-  bucket at the path set in `model_artifact_s3_key` (this repo covers the
-  cloud infrastructure, not the model training itself)
+- The trained model artifact `model.tar.gz` in the project folder. Terraform
+  uploads it to the data bucket at the path set in `model_artifact_s3_key`
+  (this repo covers the cloud infrastructure, not the model training itself)
 - The SageMaker inference container image URI for your region/framework.
   Find it with the SageMaker Python SDK, e.g.:
-  ```python
+```python
   from sagemaker import image_uris
   image_uris.retrieve(framework="sklearn", region="eu-central-1", version="1.2-1")
-  ```
+```
 
 ## Deploy
 
@@ -32,6 +32,14 @@ terraform apply -var="sagemaker_image_uri=<your-image-uri>"
 
 Or set `sagemaker_image_uri` (and any other variables you want to override)
 in a `terraform.tfvars` file instead of passing `-var` each time.
+
+## What Terraform manages
+
+Everything is deployed with `terraform apply`, with no manual upload steps:
+- the model file (`model.tar.gz`) in the data bucket
+- the dashboard page (`dashboard/index.html`) in the dashboard bucket; the
+  real API address is filled in automatically
+- CORS on the API, which allows requests only from the CloudFront dashboard address
 
 ## Outputs
 
