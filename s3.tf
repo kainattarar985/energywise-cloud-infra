@@ -39,3 +39,19 @@ resource "aws_s3_bucket_public_access_block" "dashboard" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+# Uploads the trained model, so deployment no longer needs a manual `aws s3 cp`
+resource "aws_s3_object" "model" {
+  bucket = aws_s3_bucket.data.id
+  key    = var.model_artifact_s3_key
+  source = "${path.module}/model.tar.gz"
+  etag   = filemd5("${path.module}/model.tar.gz")
+}
+# Uploads the dashboard page and fills in the real API address
+resource "aws_s3_object" "dashboard_index" {
+  bucket       = aws_s3_bucket.dashboard.id
+  key          = "index.html"
+  content_type = "text/html"
+  content = templatefile("${path.module}/dashboard/index.html", {
+    api_endpoint = "${aws_apigatewayv2_api.http_api.api_endpoint}/predict"
+  })
+}

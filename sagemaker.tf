@@ -1,6 +1,7 @@
 resource "aws_sagemaker_model" "prediction" {
   name               = "${var.project_name}-${var.environment}-model"
   execution_role_arn = aws_iam_role.sagemaker_execution.arn
+  depends_on         = [aws_s3_object.model]   # <-- add this line
 
   primary_container {
     image          = var.sagemaker_image_uri

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EnergyWise — Consumption Predictor</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; background: #F4F7F6; color: #14231F; max-width: 480px; margin: 40px auto; padding: 0 20px; }
+  h1 { font-size: 22px; color: #0D3B36; }
+  p.sub { color: #55665F; font-size: 14px; margin-top: -8px; }
+  label { display: block; margin-top: 14px; font-size: 13px; font-weight: bold; color: #0D3B36; }
+  input, select { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #C7D6D1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+  button { margin-top: 20px; width: 100%; padding: 10px; background: #0D3B36; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
+  button:hover { background: #144F48; }
+  #result { margin-top: 20px; padding: 14px; border-radius: 8px; background: #E7F3F0; font-size: 15px; display: none; }
+  #result.error { background: #FBE6E6; color: #8A1F1F; }
+</style>
+</head>
+<body>
+  <h1>EnergyWise</h1>
+  <p class="sub">Predict energy consumption from usage &amp; weather patterns.</p>
+
+  <label for="hour">Hour of day (0-23)</label>
+  <input id="hour" type="number" min="0" max="23" value="14" />
+
+  <label for="day_of_week">Day of week (0=Mon .. 6=Sun)</label>
+  <input id="day_of_week" type="number" min="0" max="6" value="2" />
+
+  <label for="season">Season</label>
+  <select id="season">
+    <option value="0">Winter</option>
+    <option value="1">Spring</option>
+    <option value="2">Summer</option>
+    <option value="3">Fall</option>
+  </select>
+
+  <label for="temperature_c">Outdoor temperature (°C)</label>
+  <input id="temperature_c" type="number" step="0.1" value="5.3" />
+
+  <label for="occupancy">Occupied?</label>
+  <select id="occupancy">
+    <option value="1">Yes</option>
+    <option value="0">No</option>
+  </select>
+
+  <label for="prev_day_usage_kwh">Previous day's usage (kWh)</label>
+  <input id="prev_day_usage_kwh" type="number" step="0.1" value="22.4" />
+
+  <button onclick="predict()">Predict consumption</button>
+
+  <div id="result"></div>
+
+  <script>
+    const API_ENDPOINT = "${api_endpoint}";
+
+    async function predict() {
+      const resultBox = document.getElementById("result");
+      resultBox.style.display = "block";
+      resultBox.className = "";
+      resultBox.textContent = "Predicting...";
+
+      const payload = {
+        hour: Number(document.getElementById("hour").value),
+        day_of_week: Number(document.getElementById("day_of_week").value),
+        season: Number(document.getElementById("season").value),
+        temperature_c: Number(document.getElementById("temperature_c").value),
+        occupancy: Number(document.getElementById("occupancy").value),
+        prev_day_usage_kwh: Number(document.getElementById("prev_day_usage_kwh").value),
+      };
+
+      try {
+        const res = await fetch(API_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        resultBox.textContent =
+          "Predicted consumption: " + data.predicted_energy_kwh.toFixed(2) + " kWh";
+      } catch (err) {
+        resultBox.className = "error";
+        resultBox.textContent = "Error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
